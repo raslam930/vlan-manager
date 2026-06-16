@@ -1,8 +1,8 @@
-# VLAN Manager
+# VLAN and Bridging Manager
 
-VLAN Manager component provides VLAN (Virtual LAN) management capabilities for RDK-B devices. This component serves as the central orchestrator for Ethernet link management and VLAN termination services, enabling advanced network segmentation, QoS prioritization, and traffic isolation in residential gateway and set-top box deployments. VLAN Manager integrates seamlessly with the RDK-B middleware stack, providing standardized TR-181 data model interfaces for VLAN configuration and monitoring. It abstracts hardware-specific VLAN operations through a well-defined HAL interface, enabling platform-agnostic VLAN management across different silicon vendors and hardware platforms. The component plays a vital role in supporting advanced networking features such as multi-service delivery, subscriber isolation, and bandwidth management.
+VLAN and Bridging Manager component provides VLAN (Virtual LAN) and network bridge management capabilities for RDK-B devices. This component is responsible for both VLAN creation and bridge creation, serving as the central orchestrator for Ethernet link management, VLAN termination services, and L2 bridge provisioning. It enables advanced network segmentation, QoS prioritization, and traffic isolation in residential gateway and set-top box deployments. VLAN and Bridging Manager integrates seamlessly with the RDK-B middleware stack, providing standardized TR-181 data model interfaces for VLAN and bridge configuration and monitoring. It abstracts hardware-specific VLAN and bridge operations through a well-defined HAL interface, enabling platform-agnostic management across different silicon vendors and hardware platforms. The component plays a vital role in supporting advanced networking features such as multi-service delivery, subscriber isolation, and bandwidth management.
 
-VLAN Manager enables service providers to implement sophisticated network architectures including triple-play services (voice, video, data), IoT device segmentation, and guest network isolation. The component ensures that VLAN operations are performed atomically and consistently, maintaining network integrity while providing real-time status monitoring and telemetry capabilities.
+VLAN and Bridging Manager enables service providers to implement sophisticated network architectures including triple-play services (voice, video, data), IoT device segmentation, and guest network isolation. The component ensures that VLAN and bridge operations are performed atomically and consistently, maintaining network integrity while providing real-time status monitoring and telemetry capabilities.
 
 ```mermaid
 graph LR
@@ -138,22 +138,6 @@ graph LR
 - **TR-181 Data Model**: Device.X_RDK_Ethernet.Link.{i} and Device.X_RDK_Ethernet.VLANTermination.{i} object support
 - **Configuration Files**: /etc/rdk/conf/vlan_manager_conf.json, /etc/rdk/schemas/ethlinkvlanterm_hal_schema.json
 - **Startup Order**: R-BUS → PSM → HAL initialization → VLAN Manager component registration
-
-<br>
-
-**Build-Time Flags and Configuration:**
-
-| Flag                              | Description                                                                                       | Source Files                                                         |
-| --------------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `VLAN_MANAGER_HAL_ENABLED`        | Enables VLAN Manager HAL integration via JSON-RPC for VLAN interface configuration and monitoring | `vlan_eth_hal.c`, `vlan_eth_hal.h`, `vlan_apis.c`, `ethernet_apis.c` |
-| `COMCAST_VLAN_HAL_ENABLED`        | Enables Comcast VLAN HAL code path for interface creation and management                          | `ethernet_apis.c`, `ethernet_apis.h`                                 |
-| `WAN_MANAGER_UNIFICATION_ENABLED` | Enables unified WAN Manager integration for consolidated interface management                     | `ethernet_apis.c`                                                    |
-| `ENABLE_WANMODECHANGE_NOREBOOT`   | Enables WAN mode switching without requiring a device reboot                                      | `ethernet_apis.c`                                                    |
-| `FEATURE_MAPT`                    | Enables MAP-T (Mapping of Address and Port Translation) IPv6 transition feature support           | `vlan_apis.c`                                                        |
-| `FEATURE_SUPPORT_RDKLOG`          | Enables RDK Logger integration for telemetry and diagnostics                                      | `source/RdkVlanManager/Makefile.am`                                  |
-| `ENABLE_SD_NOTIFY`                | Enables systemd service readiness notification via `sd_notify()`                                  | `configure.ac`, `ssp_main.c`                                         |
-| `INCLUDE_BREAKPAD`                | Enables Breakpad crash reporting and crash dump collection                                        | `ssp_main.c`                                                         |
-| `_BRIDGE_UTILS_BIN_`              | Enables bridge-utils based bridge configuration including OVS and mesh networking support         | `ethernet_apis.c`                                                    |
 
 <br>
 
@@ -393,21 +377,20 @@ The VLAN Manager operates as a central hub in the RDK-B networking ecosystem, co
 | -------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------- |
 | **RDK-B Middleware Components**  |
 | TR-069 Parameter Agent           | TR-181 parameter get/set operations, configuration management | `GetParameterValues`, `SetParameterValues`, `GetParameterNames` |
-| PSM (Persistent Storage Manager) | VLAN configuration persistence, parameter storage             | `PSM_Set_Record_Value2`, `PSM_Get_Record_Value2`                |
+| PSM (Persistent Storage Manager) | VLAN configuration persistence, parameter storage             | `PSM_Get_Record_Value2`                                         |
 | WAN Manager                      | WAN interface VLAN configuration, status synchronization      | `Device.X_RDK_WanManager.CPEInterface.{i}.*`                    |
-| Bridge Manager                   | L2 bridge VLAN membership, port configuration                 | `Device.X_RDK_BridgingManager.*` events                         |
 | **System & HAL Layers**          |
 | Ethernet/VLAN HAL                | Hardware VLAN operations, interface control                   | `getParameters`, `setParameters`, `deleteObject`                |
-| Linux Network Stack              | Direct interface operations, status monitoring                | `ioctl()`, `netlink_socket()`, `/proc/net/*`                    |
+| Linux Network Stack              | Direct interface operations, status monitoring                | `ioctl()`, `/proc/net/*`                                        |
 
 **Main events Published by VLAN Manager:**
 
-| Event Name                 | Event Topic/Path                                   | Trigger Condition                   | Subscriber Components                    |
-| -------------------------- | -------------------------------------------------- | ----------------------------------- | ---------------------------------------- |
-| VLANInterface.Created      | `Device.X_RDK_Ethernet.VLANTermination.{i}`        | VLAN interface creation complete    | WAN Manager, Bridge Manager, QoS Manager |
-| VLANInterface.StatusChange | `Device.X_RDK_Ethernet.VLANTermination.{i}.Status` | Interface operational status change | Network monitoring components            |
-| EthernetLink.StatusChange  | `Device.X_RDK_Ethernet.Link.{i}.Status`            | Physical link status change         | WAN Manager, Bridge Manager              |
-| Configuration.Committed    | `Device.X_RDK_Ethernet`                            | Configuration transaction commit    | Management interfaces, Telemetry         |
+| Event Name                 | Event Topic/Path                                   | Trigger Condition                   | Subscriber Components            |
+| -------------------------- | -------------------------------------------------- | ----------------------------------- | -------------------------------- |
+| VLANInterface.Created      | `Device.X_RDK_Ethernet.VLANTermination.{i}`        | VLAN interface creation complete    | WAN Manager, QoS Manager         |
+| VLANInterface.StatusChange | `Device.X_RDK_Ethernet.VLANTermination.{i}.Status` | Interface operational status change | Network monitoring components    |
+| EthernetLink.StatusChange  | `Device.X_RDK_Ethernet.Link.{i}.Status`            | Physical link status change         | WAN Manager                      |
+| Configuration.Committed    | `Device.X_RDK_Ethernet`                            | Configuration transaction commit    | Management interfaces, Telemetry |
 
 ### IPC Flow Patterns
 
@@ -440,16 +423,13 @@ sequenceDiagram
     participant HAL as Ethernet HAL
     participant VLAN as VLAN Manager
     participant Sub1 as WAN Manager
-    participant Sub2 as Bridge Manager
     participant Telemetry as RDK Logger
 
     HAL->>VLAN: Interface Status Event
     VLAN->>VLAN: Process Status Change
     VLAN->>Sub1: VLAN Status Update Event
-    VLAN->>Sub2: Interface Status Event
     VLAN->>Telemetry: Log Status Change
     Sub1-->>VLAN: Event Acknowledged
-    Sub2-->>VLAN: Event Acknowledged
 ```
 
 ## Implementation Details
@@ -460,13 +440,11 @@ The VLAN Manager integrates with the Ethernet/VLAN Hardware Abstraction Layer th
 
 **Core HAL APIs:**
 
-| HAL API          | Purpose                                                                | Implementation File |
-| ---------------- | ---------------------------------------------------------------------- | ------------------- |
-| `getParameters`  | Retrieve current VLAN interface configuration and status from hardware | `vlan_eth_hal.c`    |
-| `setParameters`  | Configure VLAN interfaces, VLAN IDs, and hardware filtering            | `vlan_eth_hal.c`    |
-| `deleteObject`   | Remove VLAN termination instances and cleanup hardware resources       | `vlan_eth_hal.c`    |
-| `getSchema`      | Retrieve HAL schema version and supported parameter definitions        | `vlan_eth_hal.c`    |
-| `subscribeEvent` | Register for hardware-level interface status and error notifications   | `vlan_eth_hal.c`    |
+| HAL API         | Purpose                                                                | Implementation File |
+| --------------- | ---------------------------------------------------------------------- | ------------------- |
+| `getParameters` | Retrieve current VLAN interface configuration and status from hardware | `vlan_eth_hal.c`    |
+| `setParameters` | Configure VLAN interfaces, VLAN IDs, and hardware filtering            | `vlan_eth_hal.c`    |
+| `deleteObject`  | Remove VLAN termination instances and cleanup hardware resources       | `vlan_eth_hal.c`    |
 
 ### Key Implementation Logic
 
