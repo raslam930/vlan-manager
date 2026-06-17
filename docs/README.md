@@ -82,7 +82,7 @@ graph LR
             PluginMain["Plugin Main"]
         end
 
-        subgraph BusinessLofic ["Business Logic Layer"]
+        subgraph BusinessLogic ["Business Logic Layer"]
             VlanAPIs["VLAN APIs"]
             EthAPIs["Ethernet APIs"]
             Internal["Internal Logic"]
@@ -375,11 +375,11 @@ The VLAN Manager operates as a central hub in the RDK-B networking ecosystem, co
 
 | Target Component/Layer           | Interaction Purpose                                           | Key APIs/Endpoints                                              |
 | -------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------- |
-| **RDK-B Middleware Components**  |
+| **RDK-B Middleware Components**  |                                                               |                                                                 |
 | TR-069 Parameter Agent           | TR-181 parameter get/set operations, configuration management | `GetParameterValues`, `SetParameterValues`, `GetParameterNames` |
 | PSM (Persistent Storage Manager) | VLAN configuration persistence, parameter storage             | `PSM_Get_Record_Value2`                                         |
 | WAN Manager                      | WAN interface VLAN configuration, status synchronization      | `Device.X_RDK_WanManager.CPEInterface.{i}.*`                    |
-| **System & HAL Layers**          |
+| **System & HAL Layers**          |                                                               |                                                                 |
 | Ethernet/VLAN HAL                | Hardware VLAN operations, interface control                   | `getParameters`, `setParameters`, `deleteObject`                |
 | Linux Network Stack              | Direct interface operations, status monitoring                | `ioctl()`, `/proc/net/*`                                        |
 
